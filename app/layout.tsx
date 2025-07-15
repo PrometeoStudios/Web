@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Automatiza tus citas, atención y ventas con IA. Resultados garantizados en 30 días. Más clientes, menos trabajo.",
   generator: "Next.js",
   icons: {
-    icon: "/favicon-32x32.png",
+    icon: "/favicon-96x96-removebg-preview.png",
   },
 };
 

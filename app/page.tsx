@@ -59,53 +59,37 @@ const scaleIn = {
 // Componente ROI Calculator
 function ROICalculator() {
   const [formData, setFormData] = React.useState({
-    employees: 3,
-    hourlyRate: 15,
-    hoursPerWeek: 20,
-    currentAppointments: 120,
-    cancellationRate: 30,
-    averageServiceValue: 80,
-    businessType: "clinica",
+    weeklyHours: 15,
+    hourlyRate: 75,
+    monthlyClients: 20,
   });
 
+  const INITIAL_INVESTMENT = 1800; // €
+
   const calculateROI = () => {
-    // Cálculos de ahorro
-    const weeklyTimeSaved = formData.hoursPerWeek * 0.7; // 70% de ahorro en tiempo
-    const monthlyCostSavings = weeklyTimeSaved * 4 * formData.hourlyRate;
-
-    // Cálculos de ingresos adicionales
-    const additionalAppointments = formData.currentAppointments * 0.5; // 50% más citas
-    const reducedCancellations =
-      ((formData.currentAppointments * formData.cancellationRate) / 100) * 0.7; // 70% menos cancelaciones
-    const totalNewAppointments = additionalAppointments + reducedCancellations;
-    const additionalRevenue =
-      totalNewAppointments * formData.averageServiceValue;
-
-    // ROI anual
-    const annualSavings = monthlyCostSavings * 12;
-    const annualRevenue = additionalRevenue * 12;
-    const totalBenefit = annualSavings + annualRevenue;
-    const investment = 2000; // Costo anual promedio del servicio
-    const roi = ((totalBenefit - investment) / investment) * 100;
+    // Cálculos automáticos según las fórmulas proporcionadas
+    const timeSavedPerMonth = formData.weeklyHours * 4; // h/mes
+    const monthlySavings = timeSavedPerMonth * formData.hourlyRate; // €/mes
+    const breakEvenDays = Math.ceil((INITIAL_INVESTMENT / monthlySavings) * 30); // días para recuperar inversión
+    const annualROI =
+      ((monthlySavings * 12 - INITIAL_INVESTMENT) / INITIAL_INVESTMENT) * 100; // ROI a 12 meses
 
     // Actualizar resultados en el DOM
     if (typeof document !== "undefined") {
       const timeSavingsEl = document.getElementById("time-savings");
       const monthlySavingsEl = document.getElementById("monthly-savings");
-      const additionalRevenueEl = document.getElementById("additional-revenue");
+      const breakEvenEl = document.getElementById("break-even");
       const totalRoiEl = document.getElementById("total-roi");
 
       if (timeSavingsEl)
-        timeSavingsEl.textContent = `${Math.round(weeklyTimeSaved)}h/semana`;
+        timeSavingsEl.textContent = `${Math.round(timeSavedPerMonth)}h/mes`;
       if (monthlySavingsEl)
         monthlySavingsEl.textContent = `€${Math.round(
-          monthlyCostSavings
+          monthlySavings
         ).toLocaleString()}`;
-      if (additionalRevenueEl)
-        additionalRevenueEl.textContent = `€${Math.round(
-          additionalRevenue
-        ).toLocaleString()}`;
-      if (totalRoiEl) totalRoiEl.textContent = `+${Math.round(roi)}%`;
+      if (breakEvenEl) breakEvenEl.textContent = `${breakEvenDays} días`;
+      if (totalRoiEl)
+        totalRoiEl.textContent = `+${Math.round(annualROI).toLocaleString()}%`;
     }
   };
 
@@ -113,10 +97,11 @@ function ROICalculator() {
     calculateROI();
   }, [formData]);
 
-  const handleInputChange = (field: string, value: number | string) => {
+  const handleInputChange = (field: string, value: string) => {
+    const numValue = value === "" ? 0 : Number.parseInt(value) || 0;
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: numValue,
     }));
   };
 
@@ -124,128 +109,140 @@ function ROICalculator() {
     <div className="space-y-4 sm:space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Número de empleados en atención al cliente
+          Horas semanales en tareas repetitivas
         </label>
-        <Input
-          type="number"
-          value={formData.employees}
-          onChange={(e) =>
-            handleInputChange("employees", Number.parseInt(e.target.value) || 0)
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="1"
-          max="50"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            value={formData.weeklyHours}
+            onChange={(e) => handleInputChange("weeklyHours", e.target.value)}
+            className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base flex-1"
+            min="5"
+            max="80"
+            placeholder="10-40h"
+          />
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "weeklyHours",
+                  (formData.weeklyHours + 1).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#c0c0c0] hover:bg-white text-black font-bold rounded-t-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "weeklyHours",
+                  Math.max(5, formData.weeklyHours - 1).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#808080] hover:bg-[#c0c0c0] text-white font-bold rounded-b-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">
+          Responder emails, seguimiento, gestión de leads, presupuestos...
+        </p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Costo por hora de empleado (€)
+          Coste por hora de tu equipo o tu tiempo (€)
         </label>
-        <Input
-          type="number"
-          value={formData.hourlyRate}
-          onChange={(e) =>
-            handleInputChange(
-              "hourlyRate",
-              Number.parseInt(e.target.value) || 0
-            )
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="10"
-          max="100"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            value={formData.hourlyRate}
+            onChange={(e) => handleInputChange("hourlyRate", e.target.value)}
+            className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base flex-1"
+            min="20"
+            max="200"
+            placeholder="50-75€"
+          />
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "hourlyRate",
+                  (formData.hourlyRate + 5).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#c0c0c0] hover:bg-white text-black font-bold rounded-t-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "hourlyRate",
+                  Math.max(20, formData.hourlyRate - 5).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#808080] hover:bg-[#c0c0c0] text-white font-bold rounded-b-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">Default sugerido: 50-75€</p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Horas semanales en tareas manuales
+          Clientes/proyectos al mes (opcional)
         </label>
-        <Input
-          type="number"
-          value={formData.hoursPerWeek}
-          onChange={(e) =>
-            handleInputChange(
-              "hoursPerWeek",
-              Number.parseInt(e.target.value) || 0
-            )
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="5"
-          max="80"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Citas/consultas mensuales actuales
-        </label>
-        <Input
-          type="number"
-          value={formData.currentAppointments}
-          onChange={(e) =>
-            handleInputChange(
-              "currentAppointments",
-              Number.parseInt(e.target.value) || 0
-            )
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="10"
-          max="1000"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Tasa de cancelación actual (%)
-        </label>
-        <Input
-          type="number"
-          value={formData.cancellationRate}
-          onChange={(e) =>
-            handleInputChange(
-              "cancellationRate",
-              Number.parseInt(e.target.value) || 0
-            )
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="0"
-          max="100"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Valor promedio por servicio (€)
-        </label>
-        <Input
-          type="number"
-          value={formData.averageServiceValue}
-          onChange={(e) =>
-            handleInputChange(
-              "averageServiceValue",
-              Number.parseInt(e.target.value) || 0
-            )
-          }
-          className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base"
-          min="20"
-          max="500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Tipo de negocio
-        </label>
-        <select
-          value={formData.businessType}
-          onChange={(e) => handleInputChange("businessType", e.target.value)}
-          className="w-full h-12 p-3 bg-[#1a1a1a] border border-[#808080] rounded-md text-white text-base focus:ring-2 focus:ring-[#c0c0c0] focus:border-[#c0c0c0]"
-        >
-          <option value="clinica">Clínica/Centro Médico</option>
-          <option value="inmobiliaria">Inmobiliaria</option>
-          <option value="otro">Otro sector</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            value={formData.monthlyClients}
+            onChange={(e) =>
+              handleInputChange("monthlyClients", e.target.value)
+            }
+            className="bg-[#1a1a1a] border-[#808080] text-white h-12 text-base flex-1"
+            min="1"
+            max="1000"
+            placeholder="Opcional pero útil"
+          />
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "monthlyClients",
+                  (formData.monthlyClients + 5).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#c0c0c0] hover:bg-white text-black font-bold rounded-t-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleInputChange(
+                  "monthlyClients",
+                  Math.max(1, formData.monthlyClients - 5).toString()
+                )
+              }
+              className="w-8 h-6 bg-[#808080] hover:bg-[#c0c0c0] text-white font-bold rounded-b-md transition-colors flex items-center justify-center text-sm"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">
+          Útil para calcular potencial de escala
+        </p>
       </div>
     </div>
   );
@@ -296,12 +293,12 @@ export default function PrometeoStudiosLanding() {
         transition={{ duration: 0.6 }}
         className="border-b border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50"
       >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 flex-shrink-0"
           >
             <Image
               src="/logogris-removebg-preview.png"
@@ -310,7 +307,7 @@ export default function PrometeoStudiosLanding() {
               height={40}
               className="object-contain"
             />
-            <span className="text-2xl font-bold text-[#c0c0c0]">
+            <span className="text-xl md:text-2xl font-bold text-[#c0c0c0]">
               PROMETEO STUDIOS
             </span>
           </motion.div>
@@ -318,29 +315,29 @@ export default function PrometeoStudiosLanding() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="hidden md:flex space-x-8"
+            className="hidden lg:flex space-x-6 xl:space-x-8"
           >
             <Link
               href="#servicios"
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors text-sm xl:text-base"
             >
               Servicios
             </Link>
             <Link
               href="#casos"
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors text-sm xl:text-base"
             >
               Casos de Éxito
             </Link>
             <Link
               href="#proceso"
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors text-sm xl:text-base"
             >
               Proceso
             </Link>
             <Link
               href="#contacto"
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors text-sm xl:text-base"
             >
               Contacto
             </Link>
@@ -349,6 +346,7 @@ export default function PrometeoStudiosLanding() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex-shrink-0"
           >
             <Button
               onClick={() =>
@@ -357,9 +355,9 @@ export default function PrometeoStudiosLanding() {
                   "_blank"
                 )
               }
-              className="bg-[#c0c0c0] text-black hover:bg-white font-bold"
+              className="bg-[#c0c0c0] text-black hover:bg-white font-bold text-xs md:text-sm px-3 md:px-4 py-2"
             >
-              DEMO GRATIS
+              CONSULTORÍA GRATUITA
             </Button>
           </motion.div>
         </div>
@@ -391,9 +389,9 @@ export default function PrometeoStudiosLanding() {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 className="text-5xl lg:text-7xl font-black mb-6 leading-tight"
               >
-                MÁS CLIENTES.
+                MÁS MARGEN.
                 <br />
-                <span className="text-[#c0c0c0]">MENOS TRABAJO.</span>
+                <span className="text-[#c0c0c0]">MENOS CARGA OPERATIVA.</span>
               </motion.h1>
 
               <motion.h2
@@ -413,9 +411,9 @@ export default function PrometeoStudiosLanding() {
               >
                 Cómo{" "}
                 <span className="text-[#c0c0c0] font-bold">
-                  47 clínicas e inmobiliarias
+                  31 agencias y consultoras
                 </span>{" "}
-                están llenando su agenda automáticamente
+                están aumentando márgenes y entregando más con menos equipo
               </motion.p>
 
               <motion.p
@@ -424,8 +422,8 @@ export default function PrometeoStudiosLanding() {
                 transition={{ duration: 0.6, delay: 0.7 }}
                 className="text-lg text-gray-400 mb-10 max-w-2xl"
               >
-                Automatizar atención, citas y ventas sin cambiar tu software.
-                Sistema probado que funciona 24/7 mientras duermes.
+                Sistemas de automatización con IA que eliminan tareas
+                repetitivas y liberan tiempo de tu equipo sin cambiar tu stack.
               </motion.p>
 
               <motion.div
@@ -445,7 +443,7 @@ export default function PrometeoStudiosLanding() {
                   className="bg-[#c0c0c0] text-black hover:bg-white font-bold text-base sm:text-lg px-6 sm:px-8 py-4 h-12 sm:h-auto w-full sm:w-auto"
                 >
                   <Calendar className="mr-2 h-5 w-5" />
-                  AGENDAR DEMO GRATIS
+                  AGENDAR CONSULTORÍA GRATUITA
                 </Button>
                 <Button
                   size="lg"
@@ -532,27 +530,33 @@ export default function PrometeoStudiosLanding() {
           >
             <motion.div variants={scaleIn}>
               <div className="text-4xl lg:text-5xl font-black text-[#c0c0c0] mb-2">
-                47+
+                40+
               </div>
               <div className="text-gray-400">Empresas Automatizadas</div>
             </motion.div>
             <motion.div variants={scaleIn}>
               <div className="text-4xl lg:text-5xl font-black text-[#c0c0c0] mb-2">
-                150%
+                2,3x
               </div>
-              <div className="text-gray-400">Más Citas Promedio</div>
+              <div className="text-gray-400">
+                Aumento del Margen Operativo Promedio
+              </div>
             </motion.div>
             <motion.div variants={scaleIn}>
               <div className="text-4xl lg:text-5xl font-black text-[#c0c0c0] mb-2">
                 25h
               </div>
-              <div className="text-gray-400">Ahorradas por Semana</div>
+              <div className="text-gray-400">
+                Horas de gestión ahorradas por semana
+              </div>
             </motion.div>
             <motion.div variants={scaleIn}>
               <div className="text-4xl lg:text-5xl font-black text-[#c0c0c0] mb-2">
-                24/7
+                0
               </div>
-              <div className="text-gray-400">Atención Automatizada</div>
+              <div className="text-gray-400">
+                Fricción - Integración con tu stack actual
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -596,19 +600,42 @@ export default function PrometeoStudiosLanding() {
               <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
+                    <Target className="h-12 w-12 text-[#c0c0c0]" />
+                    <span className="text-2xl"></span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4">
+                    Embudo Automático de Captación IA
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    Atrae y convierte leads desde anuncios, redes o tu web con
+                    mensajes automáticos por WhatsApp o email
+                    hiperpersonalizados.
+                  </p>
+                  <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Hasta 3x más conversiones desde campañas publicitarias
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-3 mb-6">
                     <Bot className="h-12 w-12 text-[#c0c0c0]" />
                     <span className="text-2xl"></span>
                   </div>
                   <h3 className="text-2xl font-bold mb-4">
-                    Chatbot Inteligente
+                    Chatbot Comercial con IA
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    Atiende clientes 24/7, responde preguntas frecuentes y
-                    agenda citas automáticamente.
+                    Atiende automáticamente a tus leads, responde dudas
+                    frecuentes y guía hasta agendar una cita.
                   </p>
                   <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    90% menos consultas manuales
+                    90% menos leads perdidos por falta de respuesta
                   </div>
                 </CardContent>
               </Card>
@@ -618,42 +645,19 @@ export default function PrometeoStudiosLanding() {
               <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <Phone className="h-12 w-12 text-[#c0c0c0]" />
+                    <TrendingUp className="h-12 w-12 text-[#c0c0c0]" />
                     <span className="text-2xl"></span>
                   </div>
                   <h3 className="text-2xl font-bold mb-4">
-                    Agente Telefónico con Voz IA
+                    Lead Scoring Predictivo
                   </h3>
-                  <p className="text-gray-400 mb-4">
-                    Responde llamadas como una secretaria virtual.
-                  </p>
                   <p className="text-gray-400 mb-6">
-                    Gestiona citas, resuelve dudas frecuentes y mejora la
-                    atención al cliente.
+                    Detecta qué prospectos tienen más probabilidad de comprar y
+                    prioriza tu seguimiento comercial.
                   </p>
                   <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    80% menos llamadas manuales
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeInUp}>
-              <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Calendar className="h-12 w-12 text-[#c0c0c0]" />
-                    <span className="text-2xl"></span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4">Gestión de Citas</h3>
-                  <p className="text-gray-400 mb-6">
-                    Sistema inteligente que optimiza tu agenda y reduce
-                    cancelaciones.
-                  </p>
-                  <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    70% menos cancelaciones
+                    200% más oportunidades calificadas
                   </div>
                 </CardContent>
               </Card>
@@ -667,38 +671,15 @@ export default function PrometeoStudiosLanding() {
                     <span className="text-2xl"></span>
                   </div>
                   <h3 className="text-2xl font-bold mb-4">
-                    Seguimiento Post-Cita Inteligente
+                    Seguimiento Inteligente Multicanal
                   </h3>
-                  <p className="text-gray-400 mb-4">
-                    Contacta automáticamente con los pacientes tras cada visita.
-                  </p>
                   <p className="text-gray-400 mb-6">
-                    Solicita reseñas, recaptura pacientes inactivos y mejora la
-                    relación.
+                    Automatiza el contacto con leads que no respondieron, por
+                    WhatsApp, email o llamadas IA.
                   </p>
                   <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    +40% de retorno de pacientes
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeInUp}>
-              <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <TrendingUp className="h-12 w-12 text-[#c0c0c0]" />
-                    <span className="text-2xl"></span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4">Lead Scoring</h3>
-                  <p className="text-gray-400 mb-6">
-                    Identifica automáticamente los mejores prospectos para
-                    maximizar conversiones.
-                  </p>
-                  <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    200% más leads calificados
+                    80% más de cierre en leads calientes
                   </div>
                 </CardContent>
               </Card>
@@ -712,15 +693,37 @@ export default function PrometeoStudiosLanding() {
                     <span className="text-2xl"></span>
                   </div>
                   <h3 className="text-2xl font-bold mb-4">
-                    Mini CRM + Panel de Control
+                    Mini CRM Comercial + Panel en Tiempo Real
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    Consulta KPIs en tiempo real, gestiona contactos y
-                    centraliza tu información.
+                    Visualiza tus leads, estados y métricas clave de forma
+                    centralizada y sin complicaciones.
                   </p>
                   <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    Decisiones 3x más rápidas
+                    Decisiones 3x más rápidas en ventas
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="bg-[#2d2d2d] border-[#808080] hover:border-[#c0c0c0] transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0c0c0]/20 h-full">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Phone className="h-12 w-12 text-[#c0c0c0]" />
+                    <span className="text-2xl"></span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4">
+                    Agente de Ventas con Voz IA
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    Haz llamadas automáticas con voz natural para confirmar
+                    citas, hacer seguimiento o filtrar interesados.
+                  </p>
+                  <div className="text-[#c0c0c0] font-bold flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Hasta 70% menos llamadas manuales del equipo
                   </div>
                 </CardContent>
               </Card>
@@ -770,6 +773,33 @@ export default function PrometeoStudiosLanding() {
                   <ROICalculator />
                 </CardContent>
               </Card>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="mt-8"
+              >
+                <p className="text-gray-400 mb-6 text-center">
+                  *Cálculos basados en promedios de nuestros clientes actuales
+                </p>
+                <div className="flex justify-center">
+                  <Button
+                    size="lg"
+                    onClick={() =>
+                      window.open(
+                        "https://cal.com/prometeo-studios/consulta",
+                        "_blank"
+                      )
+                    }
+                    className="bg-[#c0c0c0] text-black hover:bg-white font-bold text-lg px-8 py-4"
+                  >
+                    <Calendar className="mr-2 h-5 w-5" />
+                    VER MI ROI PERSONALIZADO
+                  </Button>
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Resultados */}
@@ -784,16 +814,16 @@ export default function PrometeoStudiosLanding() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Clock className="h-8 w-8 text-[#c0c0c0]" />
-                    <h4 className="text-xl font-bold">Ahorro de Tiempo</h4>
+                    <h4 className="text-xl font-bold">Tiempo Ahorrado</h4>
                   </div>
                   <div
                     id="time-savings"
                     className="text-3xl font-black text-[#c0c0c0] mb-2"
                   >
-                    25h/semana
+                    60h/mes
                   </div>
                   <p className="text-gray-400">
-                    Tiempo liberado para actividades estratégicas
+                    Horas liberadas para actividades estratégicas
                   </p>
                 </CardContent>
               </Card>
@@ -801,17 +831,17 @@ export default function PrometeoStudiosLanding() {
               <Card className="bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] border-[#c0c0c0]">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <TrendingUp className="h-8 w-8 text-green-500" />
+                    <TrendingUp className="h-8 w-8 text-[#c0c0c0]" />
                     <h4 className="text-xl font-bold">Ahorro Mensual</h4>
                   </div>
                   <div
                     id="monthly-savings"
                     className="text-3xl font-black text-green-500 mb-2"
                   >
-                    €2,500
+                    €4.500
                   </div>
                   <p className="text-gray-400">
-                    En costos operativos reducidos
+                    En costos operativos mensuales
                   </p>
                 </CardContent>
               </Card>
@@ -819,17 +849,19 @@ export default function PrometeoStudiosLanding() {
               <Card className="bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] border-[#c0c0c0]">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <BarChart3 className="h-8 w-8 text-blue-500" />
-                    <h4 className="text-xl font-bold">Ingresos Adicionales</h4>
+                    <Calendar className="h-8 w-8 text-[#c0c0c0]" />
+                    <h4 className="text-xl font-bold">
+                      Recuperas la inversión en
+                    </h4>
                   </div>
                   <div
-                    id="additional-revenue"
+                    id="break-even"
                     className="text-3xl font-black text-blue-500 mb-2"
                   >
-                    €4,200
+                    12 días
                   </div>
                   <p className="text-gray-400">
-                    Por más citas y mejor conversión
+                    Tiempo estimado para break-even
                   </p>
                 </CardContent>
               </Card>
@@ -839,14 +871,14 @@ export default function PrometeoStudiosLanding() {
                   <div className="flex items-center gap-3 mb-4">
                     <Zap className="h-8 w-8 text-green-400" />
                     <h4 className="text-xl font-bold text-green-300">
-                      ROI Total Anual
+                      ROI Estimado en 12 Meses
                     </h4>
                   </div>
                   <div
                     id="total-roi"
                     className="text-4xl font-black text-green-300 mb-2"
                   >
-                    +580%
+                    +2.900%
                   </div>
                   <p className="text-green-100">
                     Retorno sobre la inversión en 12 meses
@@ -855,31 +887,6 @@ export default function PrometeoStudiosLanding() {
               </Card>
             </motion.div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center mt-12"
-          >
-            <p className="text-gray-400 mb-6">
-              *Cálculos basados en promedios de nuestros clientes actuales
-            </p>
-            <Button
-              size="lg"
-              onClick={() =>
-                window.open(
-                  "https://cal.com/prometeo-studios/consulta",
-                  "_blank"
-                )
-              }
-              className="bg-[#c0c0c0] text-black hover:bg-white font-bold text-lg px-8 py-4"
-            >
-              <Calendar className="mr-2 h-5 w-5" />
-              VER MI ROI PERSONALIZADO
-            </Button>
-          </motion.div>
         </div>
       </motion.section>
 
@@ -916,9 +923,6 @@ export default function PrometeoStudiosLanding() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <h3 className="text-3xl font-bold text-[#c0c0c0] mb-8 text-center">
-                CLÍNICAS
-              </h3>
               <motion.div
                 variants={staggerContainer}
                 initial="initial"
@@ -930,32 +934,30 @@ export default function PrometeoStudiosLanding() {
                   <Card className="bg-gradient-to-r from-[#2d2d2d] to-[#1a1a1a] border-[#c0c0c0]">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#c0c0c0]">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#c0c0c0] flex items-center justify-center bg-white p-1">
                           <Image
-                            src="/clinicalamelaperfil.webp"
-                            alt="Clínica Dental Lamela"
+                            src="/4.9actualizando.png"
+                            alt="4.9 Actualizando"
                             width={64}
                             height={64}
-                            className="object-cover w-full h-full"
+                            className="object-contain w-full h-full"
                           />
                         </div>
                         <div>
                           <h4 className="text-xl font-bold">
-                            Clínica Dental Lamela
+                            4.9 Actualizando
                           </h4>
-                          <p className="text-gray-400">
-                            Santiago de Compostela, España
-                          </p>
+                          <p className="text-gray-400">A Coruña, España</p>
                         </div>
                       </div>
                       <div className="text-4xl font-black text-[#c0c0c0] mb-2">
-                        +1000
+                        +40%
                       </div>
                       <p className="text-lg font-semibold mb-2">
-                        Citas gestionadas automáticamente en 30 días
+                        Demos agendadas en 30 días
                       </p>
                       <p className="text-gray-400">
-                        Sistema de recordatorios automatizado vía Whatsapp
+                        10h semanales ahorradas + mayor porcentaje de conversión
                       </p>
                     </CardContent>
                   </Card>
@@ -967,8 +969,8 @@ export default function PrometeoStudiosLanding() {
                       <div className="flex items-center gap-4 mb-4">
                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#c0c0c0]">
                           <Image
-                            src="/geli.webp"
-                            alt="Centro Médico Geli"
+                            src="/creative_sparks_agency.png"
+                            alt="Creative Sparks Agency"
                             width={64}
                             height={64}
                             className="object-cover w-full h-full"
@@ -976,19 +978,19 @@ export default function PrometeoStudiosLanding() {
                         </div>
                         <div>
                           <h4 className="text-xl font-bold">
-                            Centro Médico Geli
+                            Creative Sparks Agency
                           </h4>
                           <p className="text-gray-400">Barcelona, España</p>
                         </div>
                       </div>
                       <div className="text-4xl font-black text-[#c0c0c0] mb-2">
-                        25h
+                        x3
                       </div>
                       <p className="text-lg font-semibold mb-2">
-                        Ahorradas por semana en gestión
+                        Más conversiones desde campañas publicitarias
                       </p>
                       <p className="text-gray-400">
-                        Tiempo reinvertido en atención al paciente
+                        De un 10% a un 30% de conversión{" "}
                       </p>
                     </CardContent>
                   </Card>
@@ -1002,9 +1004,6 @@ export default function PrometeoStudiosLanding() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <h3 className="text-3xl font-bold text-[#c0c0c0] mb-8 text-center">
-                INMOBILIARIAS
-              </h3>
               <motion.div
                 variants={staggerContainer}
                 initial="initial"
@@ -1070,8 +1069,7 @@ export default function PrometeoStudiosLanding() {
                         De llamadas gestionadas por nuestra IA
                       </p>
                       <p className="text-gray-400">
-                        Ahorro de 20h semanales en atención al cliente y
-                        prospección
+                        Ahorro de 20h semanales en prospección
                       </p>
                     </CardContent>
                   </Card>
@@ -1398,7 +1396,7 @@ export default function PrometeoStudiosLanding() {
                       ) : (
                         <>
                           <ArrowRight className="mr-2 h-5 w-5" />
-                          AGENDAR DEMO GRATIS
+                          AGENDAR CONSULTORÍA GRATUITA
                         </>
                       )}
                     </Button>
