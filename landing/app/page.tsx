@@ -1228,10 +1228,10 @@ export default function PrometeoStudiosLanding() {
                 <div className="flex items-center gap-3 sm:gap-4 p-3 bg-[#2d2d2d] rounded-lg">
                   <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-[#c0c0c0] flex-shrink-0" />
                   <a
-                    href="mailto:hola@prometeostudios.com"
+                    href="mailto:info@aiprometeo.com"
                     className="text-base sm:text-lg hover:text-[#c0c0c0] transition-colors"
                   >
-                    hola@prometeostudios.com
+                    info@aiprometeo.com
                   </a>
                 </div>
               </div>
