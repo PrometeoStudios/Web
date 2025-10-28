@@ -493,11 +493,11 @@ export default function PrometeoStudiosLanding() {
                   className="w-80 h-80 rounded-full bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] border-4 border-[#808080] flex items-center justify-center overflow-hidden"
                 >
                   <Image
-                    src="/mariocamisetanegra.webp"
+                    src="/mario_foto_carnet_camisa.png"
                     alt="Mario - CEO y Fundador de Prometeo Studios"
                     width={300}
                     height={300}
-                    className="rounded-full object-cover w-full h-full"
+                    className="rounded-full object-cover object-center w-full h-full"
                   />
                 </motion.div>
                 <motion.div
@@ -1261,10 +1261,10 @@ export default function PrometeoStudiosLanding() {
                 <div className="flex items-center gap-3 sm:gap-4 p-3 bg-[#2d2d2d] rounded-lg">
                   <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-[#c0c0c0] flex-shrink-0" />
                   <a
-                    href="mailto:hola@prometeostudios.com"
+                    href="mailto:info@aiprometeo.com"
                     className="text-base sm:text-lg hover:text-[#c0c0c0] transition-colors"
                   >
-                    hola@prometeostudios.com
+                    info@aiprometeo.com
                   </a>
                 </div>
               </div>
