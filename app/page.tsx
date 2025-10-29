@@ -493,7 +493,7 @@ export default function PrometeoStudiosLanding() {
                   className="w-80 h-80 rounded-full bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] border-4 border-[#808080] flex items-center justify-center overflow-hidden"
                 >
                   <Image
-                    src="/mariocamisetanegra.webp"
+                    src="/mario_foto_carnet_camisa.webp"
                     alt="Mario - CEO y Fundador de Prometeo Studios"
                     width={300}
                     height={300}
